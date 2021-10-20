@@ -1,0 +1,41 @@
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-9">
+            <h1 class="text-center">Recipe Search</h1>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-9">
+            <h3 class="text-center">Input up to three ingredients and we'll find a recipe for you!</h3>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-5">
+            <form action="/" method="post">
+                <label for="ingredient1" class="form-label">Ingredient 1</label>
+                <input type="text" class="ingredient form-control" id="ingredient1" name="ingredient1">
+                <br>
+                <label for="ingredient2" class="form-label">Ingredient 2</label>
+                <input type="text" class="ingredient form-control" id="ingredient2" name="ingredient2">
+                <br>
+                <label for="ingredient3" class="form-label">Ingredient 3</label>
+                <input type="text" class="ingredient form-control" id="ingredient3" name="ingredient3">
+                <br>
+                <input type="submit" class="form-control btn btn-primary">
+            </form>
+        </div>
+    </div>
+</div>
+<br>
+<div id="results" class="container">
+    <div class="row justify-content-center">
+        <div class="col-9 text-center">
+            <% if (recipeTitle) { %>
+                <% recipeTitle.forEach(function(title){ %>
+                    <p class="text-center fs-3"><%=title%></p>
+                <% });%>
+            <% } %>
+        </div>
+    </div>
+</div>
