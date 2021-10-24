@@ -14,38 +14,52 @@ app.set('view engine', 'ejs');
 
 // Home Page
 app.get('/', function(req,res){
-    res.render('home.ejs', {recipeTitle: null});
+    res.render('home.ejs', {recipeTitle: null, searchHistory: null});
 })
 
 app.post('/', function(req,res){
     let context = {};
     context.recipeTitle = [];
+    context.searchHistory = [];
+
+    // placeholder for MVP and testing
     let ing1 = req.body.ingredient1;
     let ing2 = req.body.ingredient2;
     let ing3 = req.body.ingredient3;
+    let search = ing1 + '-' + ing2 + '-' + ing3;
 
+    // placeholder for MVP and testing
     if (ing1) {
-        let recipe = ing1 + ' recipe';
+        let recipe = ing1 + '-recipe';
         context.recipeTitle.push(recipe);
         if (ing2) {
-            recipe = ing1 + ' ' + ing2 + ' recipe';
+            recipe = ing1 + '-' + ing2 + '-recipe';
             context.recipeTitle.push(recipe);
             if (ing3) {
-                recipe = ing1 + ' ' + ing2 + ' ' + ing3 + ' recipe';
+                recipe = ing1 + '-' + ing2 + '-' + ing3 + '-recipe';
                 context.recipeTitle.push(recipe);
             }
         }
     } else if (ing2) {
-        let recipe = ing2 + ' recipe';
+        let recipe = ing2 + '-recipe';
         context.recipeTitle.push(recipe);
         if (ing3) {
-            recipe = ing2 + ' ' + ing3 + ' recipe';
+            recipe = ing2 + '-' + ing3 + '-recipe';
             context.recipeTitle.push(recipe);
         }
     } else if (ing3) {
-        let recipe = ing3 + ' recipe';
+        let recipe = ing3 + '-recipe';
         context.recipeTitle.push(recipe);
     }
+
+    // search history builder
+    console.log(req.body.searchHistoryInput);
+    let sH = req.body.searchHistoryInput;
+
+    context.searchHistory = sH.split(';');
+    context.searchHistory.push(search);
+    console.log("search history");
+    console.log(context.searchHistory);
 
     res.render('home.ejs', context);
 })

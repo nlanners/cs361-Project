@@ -1,4 +1,6 @@
-<div class="container">
+
+<!-- Title and instructions -->
+<div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-9">
             <h1 class="text-center">Recipe Search</h1>
@@ -10,8 +12,10 @@
         </div>
     </div>
 
-    <div class="row justify-content-center">
-        <div class="col-5">
+    <!-- ingredient form -->
+    <div class="row">
+        <div class="col-4"></div>
+        <div class="col-4">
             <form action="/" method="post">
                 <label for="ingredient1" class="form-label">Ingredient 1</label>
                 <input type="text" class="ingredient form-control" id="ingredient1" name="ingredient1">
@@ -22,20 +26,57 @@
                 <label for="ingredient3" class="form-label">Ingredient 3</label>
                 <input type="text" class="ingredient form-control" id="ingredient3" name="ingredient3">
                 <br>
+                <input type="hidden" id="searchHistoryInput" name="searchHistoryInput">
                 <input type="submit" class="form-control btn btn-primary">
             </form>
+        </div>
+        <div class="col-4">
+            <h4 class="text-center">Search History</h4>
+            <div id="searchHistory">
+                <% if (searchHistory) { %>
+                    <% searchHistory.forEach( (item) => { %>
+
+                        <p class="historyItem text-center"><%= item %></p>
+
+                    <% }); %>
+                <% } %>
+            </div>
+
         </div>
     </div>
 </div>
 <br>
-<div id="results" class="container">
-    <div class="row justify-content-center">
-        <div class="col-9 text-center">
-            <% if (recipeTitle) { %>
-                <% recipeTitle.forEach(function(title){ %>
-                    <p class="text-center fs-3"><%=title%></p>
-                <% });%>
-            <% } %>
-        </div>
+<!-- results -->
+<div class="row justify-content-center">
+    <div class="col-5">
+        <h3 class="text-center">Search Results</h3>
     </div>
 </div>
+
+<div class="row  justify-content-center">
+    <div class="accordion col-5" id="accordion" >
+
+        <% if (recipeTitle) { %>
+            <% recipeTitle.forEach( (title) => { %>
+            <div class="card">
+                <!-- title -->
+                <div class="card-header">
+                    <a class="btn text-center" data-bs-toggle="collapse" href="#<%= title %>">
+                        <%= title %>
+                    </a>
+                </div>
+
+                <!-- info -->
+                <div id="<%= title %>" class="collapse" data-bs-parent="#accordion">
+                    <div class="card-body">
+                        This is data for <%= title %>.
+                    </div>
+                </div>
+            </div>
+            <% });%>
+        <% } %>
+
+    </div>
+</div>
+
+<script src="./js/home.js"></script>
