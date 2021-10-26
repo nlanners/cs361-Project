@@ -56,7 +56,11 @@ app.post('/', function(req,res){
     console.log(req.body.searchHistoryInput);
     let sH = req.body.searchHistoryInput;
 
-    context.searchHistory = sH.split(';');
+    searchHistory = sH.split(';');
+    if (searchHistory.length >= 10) {
+        searchHistory.shift();
+    }
+    context.searchHistory = searchHistory.filter(word => word.length > 0);
     context.searchHistory.push(search);
     console.log("search history");
     console.log(context.searchHistory);
