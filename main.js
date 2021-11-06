@@ -45,6 +45,7 @@ async function buildRecipeList(number, searchResults, $) {
         let selector = title.replace(/ /g, '');
         selector = selector.replace(/,/g, '');
         selector = selector.replace(/'/g, '');
+        selector = selector.replace(/[0-9]/g, '');
 
         console.log(i + ' : ' + title + ' : ' + url);
 
@@ -135,12 +136,7 @@ app.post('/', function(req,res){
     });
 
     // set up scrape search
-    if (ing1) {
-        searchURL = searchURL.concat(ing1, '-');
-    }
-    if (ing2) {
-        searchURL = searchURL.concat(ing2, '-');
-    }
+    searchURL = searchURL.concat(ing1, '-', ing2, '-');
     if (ing3) {
         searchURL = searchURL.concat(ing3, '-');
     }
