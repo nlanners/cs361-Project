@@ -8,7 +8,7 @@
     </div>
     <div class="row justify-content-center">
         <div class="col-9">
-            <h3 class="text-center">Input up to three ingredients and we'll find a recipe for you!</h3>
+            <h3 class="text-center">Input two to three ingredients and we'll find a recipe for you!</h3>
         </div>
     </div>
 
@@ -26,17 +26,25 @@
                 <label for="ingredient3" class="form-label">Ingredient 3</label>
                 <input type="text" class="ingredient form-control" id="ingredient3" name="ingredient3">
                 <br>
-                <input type="hidden" id="searchHistoryInput" name="searchHistoryInput">
+                <input type="hidden" class="searchHistoryInput" name="searchHistoryInput">
                 <input type="submit" class="form-control btn btn-primary">
             </form>
         </div>
+
+        <!-- Search History -->
         <div class="col-4">
             <h4 class="text-center">Search History</h4>
             <div id="searchHistory">
                 <% if (searchHistory) { %>
                     <% searchHistory.forEach( (item) => { %>
 
-                        <p class="historyItem text-center"><%= item %></p>
+                        <form action="/" method="post">
+                            <input type="hidden" name="ingredient1" value="<%=item.ing1%>">
+                            <input type="hidden" name="ingredient2" value="<%=item.ing2%>">
+                            <input type="hidden" name="ingredient3" value="<%=item.ing3%>">
+                            <input type="hidden" class="searchHistoryInput" name="searchHistoryInput">
+                            <input type="submit" class="historyItem" value="<%=item.combinedSearch%>">
+                        </form>
 
                     <% }); %>
                 <% } %>
@@ -46,6 +54,7 @@
     </div>
 </div>
 <br>
+
 <!-- results -->
 <div class="row justify-content-center">
     <div class="col-5">
@@ -54,22 +63,45 @@
 </div>
 
 <div class="row  justify-content-center">
-    <div class="accordion col-5" id="accordion" >
+    <div class="accordion col-9" id="accordion" >
 
-        <% if (recipeTitle) { %>
-            <% recipeTitle.forEach( (title) => { %>
+        <% if (recipeTitles) { %>
+            <% recipeTitles.forEach( (recipe) => { %>
             <div class="card">
                 <!-- title -->
                 <div class="card-header">
-                    <a class="btn text-center" data-bs-toggle="collapse" href="#<%= title %>">
-                        <%= title %>
+                    <a class="btn text-center" data-bs-toggle="collapse" href="#<%=recipe.selector%>">
+                        <p class="h3" style="color:#135ca5"><%=recipe.title%></p>
                     </a>
                 </div>
 
                 <!-- info -->
-                <div id="<%= title %>" class="collapse" data-bs-parent="#accordion">
+                <div id="<%=recipe.selector%>" class="collapse" data-bs-parent="#accordion">
                     <div class="card-body">
-                        This is data for <%= title %>.
+                        <div class="row">
+                            <div class="col-4">
+                                <h3>Ingredients</h3>
+                                <ul class="list-unstyled">
+                                    <% recipe.ingredientList.forEach( (ingredient) => { %>
+                                        <li><%=ingredient%></li>
+                                    <% }) %>
+                                </ul>
+                            </div>
+                            <div class="col-8">
+                                <h3>Directions</h3>
+                                <ol>
+                                    <% recipe.directionList.forEach( (direction) => {%>
+                                        <li><%=direction%></li>
+                                    <% }) %>
+                                </ol>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div>
+                                <p>Source: </p>
+                                <a href="<%=recipe.url%>" target="_blank"><%=recipe.url%></a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
