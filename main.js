@@ -135,7 +135,7 @@ async function getImage(query){
 
 // Home Page
 app.get('/', function(req,res){
-    res.render('home.ejs', {recipeTitles: null, searchHistory: null});
+    res.render('home.ejs', {recipeTitles: null, searchHistory: null, currentSearch: null, searchMessage: 'Search Results'});
 })
 
 app.post('/', function(req,res){
@@ -178,6 +178,7 @@ app.post('/', function(req,res){
         'combinedSearch'    :   combined
     });
 
+    context.searchMessage = 'Search Results For ' + combined;
     // set up scrape search
     searchURL = searchURL.concat(ing1, '-', ing2, '-');
     if (ing3) {

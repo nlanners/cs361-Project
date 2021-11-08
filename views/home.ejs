@@ -43,7 +43,7 @@
                             <input type="hidden" name="ingredient2" value="<%=item.ing2%>">
                             <input type="hidden" name="ingredient3" value="<%=item.ing3%>">
                             <input type="hidden" class="searchHistoryInput" name="searchHistoryInput">
-                            <input type="submit" class="historyItem btn btn-info" value="<%=item.combinedSearch%>">
+                            <input type="submit" class="historyItem btn btn-secondary" value="<%=item.combinedSearch%>">
                         </form>
 
                     <% }); %>
@@ -57,8 +57,8 @@
 
 <!-- results -->
 <div class="row justify-content-center">
-    <div class="col-5">
-        <h3 class="text-center">Search Results For: <%=currentSearch%></h3>
+    <div class="col-9">
+        <h3 class="text-center"><%=searchMessage%></h3>
     </div>
 </div>
 
