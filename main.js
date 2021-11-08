@@ -14,8 +14,10 @@ app.use(ejs);
 app.set('port', 65535);
 app.set('view engine', 'ejs');
 
-const imageURL = 'http://jaclynsimagescraper.herokuapp.com/'
+//const imageURL = 'https://jaclynsimagescraper.herokuapp.com/'
+const websiteURL = 'https://websiteimagescraper.herokuapp.com/'
 const website = 'https://www.foodnetwork.com/search/'
+const invalidChars = [/ /g, /[0-9]/g, /[^ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+]/g];
 
 async function performSearch(searchURL) {
     // scrape and process
@@ -42,12 +44,12 @@ async function buildRecipeList(number, searchResults, $) {
     for (let i = 0; i < number; i++) {
         const title = $(searchResults[i]).find('.m-MediaBlock__a-HeadlineText').text().trim();
         let url = $(searchResults[i]).find('a').attr('href');
-        let selector = title.replace(/ /g, '');
-        selector = selector.replace(/,/g, '');
-        selector = selector.replace(/'/g, '');
-        selector = selector.replace(/[0-9]/g, '');
+        let selector = title;
+        invalidChars.forEach(expression => {
+            selector = selector.replace(expression, '');
+        })
 
-        console.log(i + ' : ' + title + ' : ' + url);
+        //console.log(i + ' : ' + title + ' : ' + url);
 
         if (url) {
             url = 'https:' + url;
@@ -69,8 +71,23 @@ async function getRecipe(url, title, selector) {
         const $ = cheerio.load(html);
         const ingredients = $('.o-Ingredients__a-Ingredient', html);
         const directions = $('.o-Method__m-Step', html);
+
+        let lead = $('.m-MediaBlock__VideoButton', html);
+        if (lead.length === 0) {
+            lead = null;
+        }
+
+        let imageTitle = $(lead).find('img').attr('title');
+        if (!imageTitle) {
+            imageTitle = $(lead).find('img').attr('alt');
+            if (!imageTitle) {
+                imageTitle = '';
+            }
+        }
+
         let ingredientList = [];
         let directionList = []
+        let image = '';
 
         for (let i = 1; i < ingredients.length; i++) {
             ingredientList.push($(ingredients[i]).text().trim());
@@ -80,16 +97,40 @@ async function getRecipe(url, title, selector) {
             directionList.push($(directions[j]).text().trim());
         }
 
+        const images = await getImage(url);
+        const imageKeys = Object.keys(images);
+
+        imageKeys.forEach(key => {
+            if (key === imageTitle) {
+                image = images[key];
+            }
+        })
+
         return {
             title,
             url,
             selector,
             ingredientList,
-            directionList
+            directionList,
+            image,
+            imageTitle
         }
     } catch (err) {
         console.log(err);
     }
+}
+
+async function getImage(query){
+    try {
+        const searchQuery = websiteURL + query
+        const response = await axios(searchQuery);
+
+        return response.data;
+
+    } catch (err) {
+        console.log(err);
+    }
+
 }
 
 // Home Page
@@ -105,6 +146,8 @@ app.post('/', function(req,res){
     let ing1 = req.body.ingredient1;
     let ing2 = req.body.ingredient2;
     let ing3 = req.body.ingredient3;
+    let combined = ing1 + '-' + ing2 + '-' + ing3;
+    context.currentSearch = combined;
 
     let searchURL = website;
 
@@ -132,7 +175,7 @@ app.post('/', function(req,res){
         'ing1'  :   ing1,
         'ing2'  :   ing2,
         'ing3'  :   ing3,
-        'combinedSearch'    :   ing1 + '-' + ing2 + '-' + ing3
+        'combinedSearch'    :   combined
     });
 
     // set up scrape search
@@ -146,9 +189,6 @@ app.post('/', function(req,res){
     performSearch(searchURL)
         .then( recipes => {
             context.recipeTitles = recipes;
-            // console.log('JUST BEFORE RENDER!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-            // console.log('context: ');
-            // console.log(context);
             res.render('home.ejs', context);
         })
         .catch( (err) => {

@@ -16,7 +16,7 @@
     <div class="row">
         <div class="col-4"></div>
         <div class="col-4">
-            <form action="/" method="post">
+            <form action="/" method="post" class="search_form">
                 <label for="ingredient1" class="form-label">Ingredient 1*</label>
                 <input type="text" class="ingredient form-control" id="ingredient1" name="ingredient1" required>
                 <br>
@@ -27,23 +27,23 @@
                 <input type="text" class="ingredient form-control" id="ingredient3" name="ingredient3">
                 <br>
                 <input type="hidden" class="searchHistoryInput" name="searchHistoryInput">
-                <input type="submit" class="form-control btn btn-primary">
+                <input type="submit" id="submit" class="form-control btn btn-primary">
             </form>
         </div>
 
         <!-- Search History -->
         <div class="col-4">
             <h4 class="text-center">Search History</h4>
-            <div id="searchHistory">
+            <div id="searchHistory" class="d-grid gap-2">
                 <% if (searchHistory) { %>
                     <% searchHistory.forEach( (item) => { %>
 
-                        <form action="/" method="post">
+                        <form action="/" method="post" class="text-center search_form">
                             <input type="hidden" name="ingredient1" value="<%=item.ing1%>">
                             <input type="hidden" name="ingredient2" value="<%=item.ing2%>">
                             <input type="hidden" name="ingredient3" value="<%=item.ing3%>">
                             <input type="hidden" class="searchHistoryInput" name="searchHistoryInput">
-                            <input type="submit" class="historyItem" value="<%=item.combinedSearch%>">
+                            <input type="submit" class="historyItem btn btn-info" value="<%=item.combinedSearch%>">
                         </form>
 
                     <% }); %>
@@ -58,7 +58,7 @@
 <!-- results -->
 <div class="row justify-content-center">
     <div class="col-5">
-        <h3 class="text-center">Search Results</h3>
+        <h3 class="text-center">Search Results For: <%=currentSearch%></h3>
     </div>
 </div>
 
@@ -97,9 +97,12 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div>
+                            <div class="col-4">
                                 <p>Source: </p>
                                 <a href="<%=recipe.url%>" target="_blank"><%=recipe.url%></a>
+                            </div>
+                            <div class="col-8">
+                                <img src="<%=recipe.image%>" class="img-fluid" alt="<%=recipe.imageTitle%>" style="width: 600px">
                             </div>
                         </div>
                     </div>
