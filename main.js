@@ -14,13 +14,17 @@ app.use(ejs);
 app.set('port', 65535);
 app.set('view engine', 'ejs');
 
-//const imageURL = 'https://jaclynsimagescraper.herokuapp.com/'
-const websiteURL = 'https://websiteimagescraper.herokuapp.com/'
+const imageURL = 'https://websiteimagescraper.herokuapp.com/'
 const website = 'https://www.foodnetwork.com/search/'
 const invalidChars = [/ /g, /[0-9]/g, /[^ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+]/g];
+const resultsNumber = 10;
 
+/**
+ * Searches `website` for with `searchURL`
+ * @param searchURL : string url with which to search
+ * @returns {Promise<*[]>} : results of the search; a list of JSONs
+ */
 async function performSearch(searchURL) {
-    // scrape and process
     try{
         const response = await axios(searchURL);
         const html = response.data;
@@ -28,20 +32,26 @@ async function performSearch(searchURL) {
 
         // get titles and urls for search results
         let searchResults = $('.o-RecipeResult', html);
-        return await buildRecipeList(10, searchResults, $)
 
-        // console.log('performSearch:');
-        // console.log(recipes);
-
+        return await buildRecipeList(searchResults, $);
 
     } catch (err) {
         console.log(err);
     }
 }
 
-async function buildRecipeList(number, searchResults, $) {
+/**
+ * Parses the search results and gets data about each recipe
+ * @param searchResults : array of entries to get data for
+ * @param $ : Cheerio
+ * @returns {Promise<*[]>} : list of JSON data of each entry
+ */
+async function buildRecipeList(searchResults, $) {
+    // TODO: RENAME BUILDRECIPELIST()?
+    // TODO: SLIM DOWN FUNCTION
     let recipes = [];
-    for (let i = 0; i < number; i++) {
+    let duplicateNumber = 1;
+    for (let i = 0; i < resultsNumber; i++) {
         const title = $(searchResults[i]).find('.m-MediaBlock__a-HeadlineText').text().trim();
         let url = $(searchResults[i]).find('a').attr('href');
         let selector = title;
@@ -49,21 +59,28 @@ async function buildRecipeList(number, searchResults, $) {
             selector = selector.replace(expression, '');
         })
 
-        //console.log(i + ' : ' + title + ' : ' + url);
+        recipes.forEach(recipe => {
+            if (recipe.selector === selector) {
+                selector = selector.concat(duplicateNumber);
+                duplicateNumber += 1;
+            }
+        })
 
         if (url) {
             url = 'https:' + url;
-            let recipe = await getRecipe(url, title, selector)
+            let recipe = await getRecipe(url);
+            recipe.title = title;
+            recipe.selector = selector;
 
-            // console.log(recipe);
             recipes.push(recipe);
         }
     }
     return recipes;
 }
 
-async function getRecipe(url, title, selector) {
-
+async function getRecipe(url) {
+    // TODO: rename getRecipe()?
+    // TODO: slim down function
     // get data for recipe
     try {
         const response = await axios(url);
@@ -85,34 +102,11 @@ async function getRecipe(url, title, selector) {
             }
         }
 
-        let ingredientList = [];
-        let directionList = []
-        let image = '';
-
-        for (let i = 1; i < ingredients.length; i++) {
-            ingredientList.push($(ingredients[i]).text().trim());
-        }
-
-        for (let j = 0; j < directions.length; j++) {
-            directionList.push($(directions[j]).text().trim());
-        }
-
-        const images = await getImage(url);
-        const imageKeys = Object.keys(images);
-
-        imageKeys.forEach(key => {
-            if (key === imageTitle) {
-                image = images[key];
-            }
-        })
-
         return {
-            title,
             url,
-            selector,
-            ingredientList,
-            directionList,
-            image,
+            'ingredientList' : getIngredients($, ingredients),
+            'directionList' : getDirections($, directions),
+            'image' : await getImage(url, imageTitle),
             imageTitle
         }
     } catch (err) {
@@ -120,17 +114,62 @@ async function getRecipe(url, title, selector) {
     }
 }
 
-async function getImage(query){
+/**
+ * Extracts ingredients from provided html
+ * @param cheerio : cheerio html
+ * @param ingredients : array of ingredient data
+ * @returns {*[]} : array of ingredients
+ */
+function getIngredients(cheerio, ingredients) {
+    let ingredientList = [];
+
+    for (let i = 1; i < ingredients.length; i++) {
+        ingredientList.push(cheerio(ingredients[i]).text().trim());
+    }
+
+    return ingredientList;
+}
+
+/**
+ * Extracts directions from provided html
+ * @param cheerio : cheerio html
+ * @param directions : array of direction data
+ * @returns {*[]} : array of directions
+ */
+function getDirections(cheerio, directions) {
+    let directionList = [];
+
+    for (let j = 0; j < directions.length; j++) {
+        directionList.push(cheerio(directions[j]).text().trim());
+    }
+
+    return directionList;
+}
+
+/**
+ * Accesses image service to retrieve image
+ * @param query : string of url to search
+ * @param imageTitle : string of image title to search for
+ * @returns {Promise<any>} : resulting image
+ */
+async function getImage(query, imageTitle){
+    // TODO: fix getImage function
+    let image = '';
+
     try {
-        const searchQuery = websiteURL + query
+        const searchQuery = imageURL + query
         const response = await axios(searchQuery);
+        const imageKeys = Object.keys(response.data);
 
-        return response.data;
-
+        imageKeys.forEach(key => {
+            if (key === imageTitle) {
+                image = response.data[key];
+            }
+        })
+        return image;
     } catch (err) {
         console.log(err);
     }
-
 }
 
 // Home Page
@@ -151,10 +190,11 @@ app.post('/', function(req,res){
 
     let searchURL = website;
 
+    // TODO: create search history builder function
     // search history builder
     let sH = req.body.searchHistoryInput;
 
-    searchHistory = sH.split(';');
+    let searchHistory = sH.split(';');
     if (searchHistory.length >= 10) {
         searchHistory.shift();
     }
@@ -195,9 +235,6 @@ app.post('/', function(req,res){
         .catch( (err) => {
             console.log(err);
         })
-
-
-
 })
 
 // 404 ERROR
