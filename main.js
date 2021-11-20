@@ -18,6 +18,7 @@ const imageURL = 'https://websiteimagescraper.herokuapp.com/'
 const website = 'https://www.foodnetwork.com/search/'
 const invalidChars = [/ /g, /[0-9]/g, /[^ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+]/g];
 const resultsNumber = 10;
+let duplicateNumber = 1;
 
 /**
  * Searches `website` for with `searchURL`
@@ -47,30 +48,16 @@ async function performSearch(searchURL) {
  * @returns {Promise<*[]>} : list of JSON data of each entry
  */
 async function buildRecipeList(searchResults, $) {
-    // TODO: RENAME BUILDRECIPELIST()?
-    // TODO: SLIM DOWN FUNCTION
     let recipes = [];
-    let duplicateNumber = 1;
     for (let i = 0; i < resultsNumber; i++) {
         const title = $(searchResults[i]).find('.m-MediaBlock__a-HeadlineText').text().trim();
         let url = $(searchResults[i]).find('a').attr('href');
-        let selector = title;
-        invalidChars.forEach(expression => {
-            selector = selector.replace(expression, '');
-        })
-
-        recipes.forEach(recipe => {
-            if (recipe.selector === selector) {
-                selector = selector.concat(duplicateNumber);
-                duplicateNumber += 1;
-            }
-        })
 
         if (url) {
             url = 'https:' + url;
             let recipe = await getRecipe(url);
             recipe.title = title;
-            recipe.selector = selector;
+            recipe.selector = createSelector(recipes, title);
 
             recipes.push(recipe);
         }
@@ -78,9 +65,33 @@ async function buildRecipeList(searchResults, $) {
     return recipes;
 }
 
+/**
+ * Creates a selector name for recipe title cards in HTML
+ * @param recipes : array of completed recipes
+ * @param title : string of recipe title
+ * @returns {*} : string of selector name
+ */
+function createSelector(recipes, title) {
+    let selector = title;
+    invalidChars.forEach(expression => {
+        selector = selector.replace(expression, '');
+    })
+
+    recipes.forEach(recipe => {
+        if (recipe.selector === selector) {
+            selector = selector.concat(duplicateNumber);
+            duplicateNumber += 1;
+        }
+    })
+    return selector;
+}
+
+/**
+ * Parses `url` html to extract data from searched recipes
+ * @param url : string of search url
+ * @returns {Promise<{image: *, ingredientList: *[], directionList: *[], imageTitle: (*|jQuery), url}>} : JSON of recipe info
+ */
 async function getRecipe(url) {
-    // TODO: rename getRecipe()?
-    // TODO: slim down function
     // get data for recipe
     try {
         const response = await axios(url);
@@ -89,29 +100,39 @@ async function getRecipe(url) {
         const ingredients = $('.o-Ingredients__a-Ingredient', html);
         const directions = $('.o-Method__m-Step', html);
 
-        let lead = $('.m-MediaBlock__VideoButton', html);
-        if (lead.length === 0) {
-            lead = null;
-        }
-
-        let imageTitle = $(lead).find('img').attr('title');
-        if (!imageTitle) {
-            imageTitle = $(lead).find('img').attr('alt');
-            if (!imageTitle) {
-                imageTitle = '';
-            }
-        }
-
         return {
-            url,
+            'url' : url,
             'ingredientList' : getIngredients($, ingredients),
             'directionList' : getDirections($, directions),
             'image' : await getImage(url, imageTitle),
-            imageTitle
+            'imageTitle' : getImageTitle($, html)
         }
     } catch (err) {
         console.log(err);
     }
+}
+
+/**
+ * Extracts the Image Title from the provided html
+ * @param cheerio : cheerio
+ * @param html : array of html
+ * @returns {*|jQuery} : string
+ */
+function getImageTitle(cheerio, html) {
+    let lead = cheerio('.m-MediaBlock__VideoButton', html);
+    if (lead.length === 0) {
+        lead = null;
+    }
+
+    let imageTitle = cheerio(lead).find('img').attr('title');
+    if (!imageTitle) {
+        imageTitle = cheerio(lead).find('img').attr('alt');
+        if (!imageTitle) {
+            imageTitle = '';
+        }
+    }
+
+    return imageTitle;
 }
 
 /**
@@ -153,7 +174,6 @@ function getDirections(cheerio, directions) {
  * @returns {Promise<any>} : resulting image
  */
 async function getImage(query, imageTitle){
-    // TODO: fix getImage function
     let image = '';
 
     try {
@@ -177,11 +197,11 @@ app.get('/', function(req,res){
     res.render('home.ejs', {recipeTitles: null, searchHistory: null, currentSearch: null, searchMessage: 'Search Results'});
 })
 
+// After clicking `Search`
 app.post('/', function(req,res){
     let context = {};
     context.searchHistory = [];
 
-    // placeholder for MVP and testing
     let ing1 = req.body.ingredient1;
     let ing2 = req.body.ingredient2;
     let ing3 = req.body.ingredient3;
