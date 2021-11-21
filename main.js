@@ -100,12 +100,14 @@ async function getRecipe(url) {
         const ingredients = $('.o-Ingredients__a-Ingredient', html);
         const directions = $('.o-Method__m-Step', html);
 
+        const imageTitle = getImageTitle($, html);
+
         return {
             'url' : url,
             'ingredientList' : getIngredients($, ingredients),
             'directionList' : getDirections($, directions),
             'image' : await getImage(url, imageTitle),
-            'imageTitle' : getImageTitle($, html)
+            'imageTitle' : imageTitle
         }
     } catch (err) {
         console.log(err);
@@ -192,27 +194,14 @@ async function getImage(query, imageTitle){
     }
 }
 
-// Home Page
-app.get('/', function(req,res){
-    res.render('home.ejs', {recipeTitles: null, searchHistory: null, currentSearch: null, searchMessage: 'Search Results'});
-})
-
-// After clicking `Search`
-app.post('/', function(req,res){
-    let context = {};
+/**
+ * Creates data for Search History
+ * @param context : JSON for ejs context
+ * @param body : JSON of request body
+ */
+function createSearchHistory(context, body) {
     context.searchHistory = [];
-
-    let ing1 = req.body.ingredient1;
-    let ing2 = req.body.ingredient2;
-    let ing3 = req.body.ingredient3;
-    let combined = ing1 + '-' + ing2 + '-' + ing3;
-    context.currentSearch = combined;
-
-    let searchURL = website;
-
-    // TODO: create search history builder function
-    // search history builder
-    let sH = req.body.searchHistoryInput;
+    let sH = body.searchHistoryInput;
 
     let searchHistory = sH.split(';');
     if (searchHistory.length >= 10) {
@@ -230,6 +219,35 @@ app.post('/', function(req,res){
             'combinedSearch'    :   item
         })
     })
+}
+
+function createSearchURL(ingredients) {
+    let searchURL = website.concat(ingredients);
+
+    if (!searchURL.endsWith('-')) {
+        searchURL = searchURL.concat('-');
+    }
+
+    searchURL = searchURL.concat('recipe-');
+
+    return searchURL;
+}
+
+// Home Page
+app.get('/', function(req,res){
+    res.render('home.ejs', {recipeTitles: null, searchHistory: null, currentSearch: null, searchMessage: 'Search Results'});
+})
+
+// After clicking `Search`
+app.post('/', function(req,res){
+    let context = {};
+    let ing1 = req.body.ingredient1;
+    let ing2 = req.body.ingredient2;
+    let ing3 = req.body.ingredient3;
+    let combined = ing1 + '-' + ing2 + '-' + ing3;
+    context.currentSearch = combined;
+
+    createSearchHistory(context, req.body)
 
     context.searchHistory.push({
         'ing1'  :   ing1,
@@ -240,12 +258,7 @@ app.post('/', function(req,res){
 
     context.searchMessage = 'Search Results For ' + combined;
     // set up scrape search
-    searchURL = searchURL.concat(ing1, '-', ing2, '-');
-    if (ing3) {
-        searchURL = searchURL.concat(ing3, '-');
-    }
-
-    searchURL = searchURL.concat('recipe-');
+    const searchURL = createSearchURL(combined);
 
     performSearch(searchURL)
         .then( recipes => {
