@@ -20,6 +20,8 @@ const invalidChars = [/ /g, /[0-9]/g, /[^ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklm
 const resultsNumber = 10;
 let duplicateNumber = 1;
 
+//TODO: MAKE BETTER COMMENTS
+
 /**
  * Searches `website` for with `searchURL`
  * @param searchURL : string url with which to search
