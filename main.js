@@ -121,14 +121,14 @@ async function getRecipe(url) {
  * @returns {*|jQuery} : string
  */
 function getImageTitle(cheerio, html) {
-    let lead = cheerio('.m-MediaBlock__VideoButton', html);
-    if (lead.length === 0) {
-        lead = null;
+    let imageWrapper = cheerio('.m-MediaBlock__VideoButton', html);
+    if (imageWrapper.length === 0) {
+        imageWrapper = null;
     }
 
-    let imageTitle = cheerio(lead).find('img').attr('title');
+    let imageTitle = cheerio(imageWrapper).find('img').attr('title');
     if (!imageTitle) {
-        imageTitle = cheerio(lead).find('img').attr('alt');
+        imageTitle = cheerio(imageWrapper).find('img').attr('alt');
         if (!imageTitle) {
             imageTitle = '';
         }
