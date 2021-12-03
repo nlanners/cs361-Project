@@ -20,7 +20,6 @@ const invalidChars = [/ /g, /[0-9]/g, /[^ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklm
 const resultsNumber = 10;
 let duplicateNumber = 1;
 
-//TODO: MAKE BETTER COMMENTS
 
 /**
  * Searches `website` for with `searchURL`
@@ -56,8 +55,7 @@ async function buildRecipeList(searchResults, $) {
         let url = $(searchResults[i]).find('a').attr('href');
 
         if (url) {
-            url = 'https:' + url;
-            let recipe = await getRecipe(url);
+            let recipe = await getRecipe('https:' + url);
             recipe.title = title;
             recipe.selector = createSelector(recipes, title);
 
@@ -94,7 +92,7 @@ function createSelector(recipes, title) {
  * @returns {Promise<{image: *, ingredientList: *[], directionList: *[], imageTitle: (*|jQuery), url}>} : JSON of recipe info
  */
 async function getRecipe(url) {
-    // get data for recipe
+
     try {
         const response = await axios(url);
         const html = response.data;
@@ -221,8 +219,20 @@ function createSearchHistory(context, body) {
             'combinedSearch'    :   item
         })
     })
+
+    context.searchHistory.push({
+        'ing1'  :   body.ingredient1,
+        'ing2'  :   body.ingredient2,
+        'ing3'  :   body.ingredient3,
+        'combinedSearch'    :   body.ingredient1 + '-' + body.ingredient2 + '-' + body.ingredient3
+    });
 }
 
+/**
+ * Creates the url to use for searching.
+ * @param ingredients : string of combined ingredients
+ * @returns {string} : string of search URL
+ */
 function createSearchURL(ingredients) {
     let searchURL = website.concat(ingredients);
 
@@ -235,30 +245,42 @@ function createSearchURL(ingredients) {
     return searchURL;
 }
 
+/**
+ * Creates the context for redering the ejs on the html page
+ * @param body : JSON of request body (req.body)
+ * @returns {{}} : JSON of rendering context
+ */
+function createContext(body) {
+    let context = {};
+    let ing1 = body.ingredient1;
+    let ing2 = body.ingredient2;
+    let ing3 = body.ingredient3;
+    let combined = ing1 + '-' + ing2 + '-' + ing3;
+    context.currentSearch = combined;
+
+    createSearchHistory(context, body);
+
+    context.searchMessage = 'Search Results For ' + combined;
+
+    return context;
+}
+
 // Home Page
 app.get('/', function(req,res){
-    res.render('home.ejs', {recipeTitles: null, searchHistory: null, currentSearch: null, searchMessage: 'Search Results'});
+    res.render('home.ejs',
+        {
+            recipeTitles: null,
+            searchHistory: null,
+            currentSearch: null,
+            searchMessage: 'Search Results'
+        });
 })
 
 // After clicking `Search`
 app.post('/', function(req,res){
-    let context = {};
-    let ing1 = req.body.ingredient1;
-    let ing2 = req.body.ingredient2;
-    let ing3 = req.body.ingredient3;
-    let combined = ing1 + '-' + ing2 + '-' + ing3;
-    context.currentSearch = combined;
 
-    createSearchHistory(context, req.body)
+    let context = createContext(req.body);
 
-    context.searchHistory.push({
-        'ing1'  :   ing1,
-        'ing2'  :   ing2,
-        'ing3'  :   ing3,
-        'combinedSearch'    :   combined
-    });
-
-    context.searchMessage = 'Search Results For ' + combined;
     // set up scrape search
     const searchURL = createSearchURL(combined);
 
